@@ -15,7 +15,7 @@ TODO
 todos los clientes conectados (por telnet).
 - Crear un cliente más copado en Python
 - Crear salas de chat
-- Comandos ICQ??
+- Comandos ICQ?? (al menos los event sounds, che!)
 
 ##Copyright
 
