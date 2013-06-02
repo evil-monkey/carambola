@@ -13,15 +13,17 @@ from carambola._EchoHandler import EchoHandler
 logging.basicConfig(level=logging.DEBUG, format="%(created)-15s %(msecs)d %(levelname)8s %(thread)d %(name)s %(message)s")
 
 class EchoServer(asyncore.dispatcher):
-    allow_reuse_address         = False
-    request_queue_size          = 5
-    address_family              = socket.AF_INET
-    socket_type                 = socket.SOCK_STREAM
+    allow_reuse_address = False
+    request_queue_size = 5
+    address_family = socket.AF_INET
+    socket_type = socket.SOCK_STREAM
+    
  
     def __init__(self, address, handlerClass=EchoHandler):
         self.log = logging.getLogger(__name__)
-        self.address            = address
-        self.handlerClass       = handlerClass
+        self.address = address
+        self.handlerClass = handlerClass
+        self.connected_clients = []
  
         asyncore.dispatcher.__init__(self)
         self.create_socket(self.address_family,
@@ -53,15 +55,26 @@ class EchoServer(asyncore.dispatcher):
     def handle_accepted(self, conn_sock, client_address):
         if self.verify_request(conn_sock, client_address):
             self.process_request(conn_sock, client_address)
- 
+    
     def verify_request(self, conn_sock, client_address):
         return True
  
     def process_request(self, conn_sock, client_address):
-        self.log.info("conn_made: client_address=%s:%s" % \
+        self.log.debug("conn_made: client_address=%s:%s" % \
                      (client_address[0],
                       client_address[1]))
-        self.handlerClass(conn_sock, client_address, self)
+        self.connected_clients.append(
+                    self.handlerClass(conn_sock, client_address, self))
  
     def handle_close(self):
         self.close()
+    
+    # Messages
+    
+    def broadcast(self, buffer, handler):
+        self.log.debug(buffer)
+        for client in self.connected_clients:
+            if not client.equals(handler):
+                client.say(buffer);
+            
+      
