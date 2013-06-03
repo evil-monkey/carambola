@@ -6,12 +6,24 @@ Created on 29/05/2013
 
 import asyncore
 import logging
+from carambola._ClientMetadata import ClientMetadata
  
 logging.basicConfig(level=logging.DEBUG, format="%(created)-15s %(msecs)d %(levelname)8s %(thread)d %(name)s %(message)s")
 
 SIZE = 1024
  
-class EchoHandler(asyncore.dispatcher):
+class ConnectionHandler(asyncore.dispatcher):
+    
+    _metadata = None
+    
+    @property
+    def metadata(self):
+        return self._metadata
+    
+    @metadata.setter
+    def metadata(self, metadata):
+        self._metadata = metadata
+        
  
     def __init__(self, conn_sock, client_address, server):
         self.log = logging.getLogger(__name__)
@@ -20,6 +32,7 @@ class EchoHandler(asyncore.dispatcher):
         self.incoming_buffer = bytes("", "ascii")
         self.outcoming_buffer = bytes("", "ascii")
         self.broadcast_buffer = bytes("", "ascii")
+        self.metadata = ClientMetadata()
         
         # We dont have anything to write, to start with
         self.is_writable = False
