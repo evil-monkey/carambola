@@ -20,7 +20,7 @@ class Command(metaclass=ABCMeta):
         return self._command
     
     @command.setter
-    def command (self,command):
+    def command (self, command):
         self._command = command
     
     @property
@@ -28,7 +28,7 @@ class Command(metaclass=ABCMeta):
         return self._kparams
     
     @kparams.setter
-    def kparams (self,kparams):
+    def kparams (self, kparams):
         self._kparams = kparams
         
     @property
@@ -36,10 +36,10 @@ class Command(metaclass=ABCMeta):
         return self._kparams
     
     @handler.setter
-    def handler (self,handler):
+    def handler (self, handler):
         self._handler = handler
 
-    def __init__(self,command, handler):
+    def __init__(self, command, handler):
         ''' Constructor
             
             Parameters:
@@ -81,7 +81,7 @@ class Command(metaclass=ABCMeta):
             ------
                 UserWarning
         '''
-        #template method
+        # template method
         
         self.kparams = self.parse_args(raw)
         

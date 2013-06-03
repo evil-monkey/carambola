@@ -8,7 +8,7 @@ import asyncore
 import logging
 import socket
 
-from carambola.server._ConnectionHandler import ConnectionHandler
+from carambola.server._Session import Session
 from carambola.server._Room import Room
 
 logging.basicConfig(level=logging.DEBUG, format="%(created)-15s %(msecs)d %(levelname)8s %(thread)d %(name)s %(message)s")
@@ -22,8 +22,7 @@ class Server(asyncore.dispatcher):
     address_family = socket.AF_INET
     socket_type = socket.SOCK_STREAM
     
- 
-    def __init__(self, address, handlerClass=ConnectionHandler):
+    def __init__(self, address, handlerClass=Session):
         self.log = logging.getLogger(__name__)
         self.address = address
         self.handlerClass = handlerClass
@@ -43,6 +42,7 @@ class Server(asyncore.dispatcher):
  
         self.server_bind()
         self.server_activate()
+        self.anonymous_index = 0
  
     def server_bind(self):
         self.bind(self.address)
@@ -72,8 +72,10 @@ class Server(asyncore.dispatcher):
         self.log.debug("conn_made: client_address=%s:%s" % \
                      (client_address[0],
                       client_address[1]))
-        self.main_room.add_member(
-                    self.handlerClass(conn_sock, client_address, self))
+        new_session = self.handlerClass(conn_sock, client_address, self.main_room)
+        new_session.metadata.nickname = self.get_anonymous_nickname()
+        
+        self.main_room.add_member(new_session)
  
     def handle_close(self):
         self.close()
@@ -87,7 +89,7 @@ class Server(asyncore.dispatcher):
             message : Buffer
                 buffer containing the message to broadcast
                
-            sender : ConnectionHandler
+            sender : Session
                 sender's connection handler, this is ignored in broadcast
                
             Return
@@ -95,11 +97,10 @@ class Server(asyncore.dispatcher):
                 void
         '''
         self.log.debug(message)
-        for room_id in self.rooms.keys():
-            self.room_broadcast(room_id, message, sender)
+        for room in self.rooms.values():
+            room.broadcast(message, sender)
             
-                
-    def room_broadcast(self, room_id, message, sender = None):
+    def room_broadcast(self, room_id, message, sender=None):
         ''' broadcast message to all room connected clients
             Parameters
             ----------
@@ -109,7 +110,7 @@ class Server(asyncore.dispatcher):
             message : Buffer
                 buffer containing the message to broadcast
                
-            sender : ConnectionHandler
+            sender : Session
                 sender's connection handler, this is ignored in broadcast
                
             Return
@@ -117,9 +118,7 @@ class Server(asyncore.dispatcher):
                 void
         '''
         self.log.debug(message)
-        for session in self.rooms.get(room_id).members:
-            if not session.equals(sender):
-                session.say(message);
+        self.rooms.get(room_id).broadcast(message, sender)
             
             
     # Commands handling
@@ -145,7 +144,7 @@ class Server(asyncore.dispatcher):
             room_id : String
                 represent the room id
                
-            session : ConnectionHandler
+            session : Session
                 new room's creator
                 
             Return
@@ -185,7 +184,7 @@ class Server(asyncore.dispatcher):
         ''' ask if the session is included in room members list
             Parameters
             ----------
-            session : ConnectionHandler
+            session : Session
                session.
                
             room_id : String
@@ -203,7 +202,7 @@ class Server(asyncore.dispatcher):
         ''' add session to room members list
             Parameters
             ----------
-            session : ConnectionHandler
+            session : Session
                session.
                
             room_id : String
@@ -222,7 +221,7 @@ class Server(asyncore.dispatcher):
         ''' remove session from room members list
             Parameters
             ----------
-            session : ConnectionHandler
+            session : Session
                session.
                
             room_id : String
@@ -240,7 +239,7 @@ class Server(asyncore.dispatcher):
         ''' asks if the session is included in room moderators list
             Parameters
             ----------
-            session : ConnectionHandler
+            session : Session
                session.
                
             room_id : String
@@ -257,7 +256,7 @@ class Server(asyncore.dispatcher):
         ''' add session to room moderators list
             Parameters
             ----------
-            session : ConnectionHandler
+            session : Session
                session.
                
             room_id : String
@@ -275,7 +274,7 @@ class Server(asyncore.dispatcher):
         ''' remove session from room moderators list
             Parameters
             ----------
-            session : ConnectionHandler
+            session : Session
                session.
                
             room_id : String
@@ -287,3 +286,6 @@ class Server(asyncore.dispatcher):
         '''
         self.rooms.get(room_id).remove_moderator(session)
   
+    def get_anonymous_nickname(self):
+        self.anonymous_index += 1
+        return "anonymous_{0}".format(self.anonymous_index)

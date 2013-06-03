@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.DEBUG, format="%(created)-15s %(msecs)d %(leve
 
 SIZE = 1024
  
-class ConnectionHandler(asyncore.dispatcher):
+class Session(asyncore.dispatcher):
     
     _metadata = None
     
@@ -25,13 +25,13 @@ class ConnectionHandler(asyncore.dispatcher):
         self._metadata = metadata
         
  
-    def __init__(self, conn_sock, client_address, server):
+    def __init__(self, conn_sock, client_address, room):
         self.log = logging.getLogger(__name__)
-        self.server = server
+        self.room = room
         self.client_address = client_address
-        self.incoming_buffer = bytes("", "ascii")
-        self.outcoming_buffer = bytes("", "ascii")
-        self.broadcast_buffer = bytes("", "ascii")
+        self.incoming_buffer = bytes("", "utf-8")
+        self.outcoming_buffer = bytes("", "utf-8")
+        self.broadcast_buffer = bytes("", "utf-8")
         self.metadata = ClientMetadata()
         
         # We dont have anything to write, to start with
@@ -55,7 +55,7 @@ class ConnectionHandler(asyncore.dispatcher):
         if data:
             self.log.debug("got data")
             self.log.debug(data);
-            #TODO: develop command parser and strategies...
+            # TODO: develop command parser and strategies...
             self.incoming_buffer += data
             self.outcoming_buffer += data
             self.broadcast_buffer += data
@@ -74,17 +74,28 @@ class ConnectionHandler(asyncore.dispatcher):
         if len(self.incoming_buffer) == 0:
             self.is_writable = False
             
-    def say(self, buffer):
-        if buffer:
-            self.send(buffer)
-            self.log.debug("sent buffer")
+    def say(self, message):
+        ''' returns a message to session's client
+            
+            Parameters:
+            ----------
+            message: String
+            
+            Return:
+            ------
+            void
+        '''
+        
+        if message:
+            self.send(message.encode("utf-8"))
+            self.log.debug("sent message")
         else:
             self.log.debug("nothing to say")
         self.is_writable = False
             
     def broadcast(self):
         if self.broadcast_buffer:
-            self.server.broadcast(self.broadcast_buffer, self)
+            self.room.broadcast(self.broadcast_buffer.decode("utf-8"), self)
             sent = self.send(self.broadcast_buffer)
             self.log.debug("broadcasted data")
             self.broadcast_buffer = self.broadcast_buffer[sent:]

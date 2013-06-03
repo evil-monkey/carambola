@@ -19,7 +19,7 @@ class Room(object):
     _last_message_by = ""
     _last_message_timestamp = ""
     _topic = ""
-    _welcome_message = "%{nickname} has joined this room. Welcome %{nickname} to #%{room_id}."
+    _welcome_message = "{nickname} has joined this room. Welcome {nickname} to #{room_id}.\r\n"
     _server = None
     
     @property
@@ -125,7 +125,10 @@ class Room(object):
             
         self.members.append(session)
         
-        self.send_room_message(self.welcome_message.format(nickname = session.metadata.nickname , room_id = self.room_id ))
+        message = self.welcome_message.format(
+            nickname=session.metadata.nickname ,
+            room_id=self.room_id)
+        self.broadcast(message)
                 
         if as_moderator:
             self.add_moderator(session)
@@ -146,6 +149,20 @@ class Room(object):
     def is_empty(self):
         return not self.members
     
-    def send_room_message(self, message):
-        self._server.room_broadcast(self.room_id, message.encode("ascii"))
+    def broadcast(self, message, sender=None):
+        
+        from_nickname = ""
+        if sender is not None:
+            from_nickname = sender.metadata.nickname
+        else:
+            from_nickname = "#" + self.room_id
+            
+        message = "{0}> {1}".format(from_nickname, message)
+        
+        for session in self.members :
+            if not session.equals(sender):
+                session.say(message)
+       
+        
+    
     

@@ -9,11 +9,11 @@ class ClientMetadata(object):
     Represents client metadata (non connection level) info
     '''
 
-    _status = None  #TODO: define a class for status object
+    _status = None  # TODO: define a class for status object
     _nickname = ""
-    _email  = ""
-    _avatar = None  #placeholder for picture
-    _tooltip_message = "" # what I'm doing|thinking|eating... stuff
+    _email = ""
+    _avatar = None  # placeholder for picture
+    _tooltip_message = ""  # what I'm doing|thinking|eating... stuff
 
     @property
     def status(self):

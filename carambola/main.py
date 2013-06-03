@@ -15,16 +15,16 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(name)s: %(message)s',
                     )
 
-address = ('localhost', 0) # let the kernel give us a port
+address = ('localhost', 0)  # let the kernel give us a port
 
-#server = Server(address)
+# server = Server(address)
 
 interface = "0.0.0.0"
 port = 8080
 server = Server((interface, port))
 server.serve_forever()
 
-ip, port = server.address # find out what port we were given
+ip, port = server.address  # find out what port we were given
 logging.debug(port)
 
 asyncore.loop()
