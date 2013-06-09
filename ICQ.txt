@@ -1,0 +1,6 @@
+¿Que comandos implementamos?
+
+http://www.librairc.net/user-commands.html
+
+El protocolo me parece medio exagerado...
+http://www.ihse.net/icq/spec/v2/icq091.txt
